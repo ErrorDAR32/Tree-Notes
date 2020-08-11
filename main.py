@@ -10,7 +10,7 @@ class Node:
 
 
 def editor(string=""):
-    return input()
+    return input(">->")
 
 
 def save(node, inden=0):
@@ -112,11 +112,11 @@ def preview(node, child=None):
     else:
         print(node.text)
         for _child in range(len(node.childs)):
-            print("  ", _child + 1, " ", preview_text(node.childs[_child].text), sep="")
+            print("  ", _child, " ", preview_text(node.childs[_child].text), sep="")
 
 
 def rpreview(node, space=0,):
-    number = 1
+    number = 0
     print(node.text, sep="")
     for child in node.childs:
         print(" " * space,number ,end=" ")
@@ -148,7 +148,7 @@ def node_navigator(node):
         # commands
 
         if cmd == "browse":
-            node_navigator(node.childs[args[0]-1])
+            node_navigator(node.childs[args[0]])
 
         elif cmd == "goup":
             return

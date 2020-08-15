@@ -1,4 +1,58 @@
-import curses
+Sintax_Matrix = {"create"  : ((),),  # suposed to be a simple sintax, but theres probably a better way to do this
+
+                 "delete"  : (
+                     (),
+                     (int,)),
+
+                 "edit"    : (
+                     (),
+                     (int,)),
+
+                 "see"     : (
+                     (),
+                     (int,)),
+
+                 "preview" : (
+                     (),
+                     (int,)),
+
+                 "rpreview": ((),),
+
+                 "load"    : (
+                     (),
+                     (str,)),
+
+                 "save"    : (
+                     (),
+                     (str,)),
+
+                 "csave"   : (
+                     (),
+                     (str,))}
+
+
+def check_sintax(sintax_matrix: dict, command, args):
+    command_sintax = sintax_matrix.get(command, None)
+    if command_sintax is None:
+        return False
+
+
+    for schema in command_sintax:
+        valid = True
+        if len(schema) == 0:
+            schema = (type(None),)
+        for scheme_element, arg in zip(schema, args):  # extra arguments are tottaly ignored
+
+            if isinstance(arg, scheme_element):
+                continue
+            else:
+                valid = False
+                break
+
+        if valid:
+            return True
+
+    return False
 
 
 class Node:
@@ -7,37 +61,51 @@ class Node:
             childs = []
         self.childs = childs
         self.text = text
+        self.alias = ""  # for the future
 
 
-def editor(string=""):
+def editor(string=""):  # coming soon
     return input(">->")
 
 
-def save(node, inden=0):
+def save(node, file, inden=0):
     res = " " * inden + '{"'
     res += node.text
     res += '"'
     res += "\n" + " " * inden + "["
     for child in node.childs:
-        res += "\n" + save(child, inden + 4)
+        res += "\n" + save(child, None , inden + 4)
     res += "]"
     res += "}"
-    return res
+    if file is not None:
+        with open(file, "wt") as f:
+            f.write(res)
+    else:
+        return res
 
 
-def csave(node): # for
-    res ='{"'
+def csave(node, file):
+    res = '{"'
     res += node.text
     res += '"'
     res += "["
     for child in node.childs:
-        res += csave(child)
+        res += csave(child, None)
     res += "]"
     res += "}"
-    return res
+
+    if file is not None:
+        with open(file, "wt") as f:
+            f.write(res)
+    else:
+        return res
 
 
-def load(string, node=None, ):
+def load(node, file, recursive = False):
+    if recursive is False:
+        with open(file, "rt") as f:
+            file = f.read()
+
     first = False
     if node is None:
         first = True
@@ -45,39 +113,43 @@ def load(string, node=None, ):
     pointer = 0
 
     while True:
-        if string[pointer] == "{":
-                pointer += 1
-                while True:
-                    if string[pointer] == '"':
-                        pointer += 1
-                        while (string[pointer] != '"') and (string[pointer - 1] != '\ '[0]):
-                            node.text += string[pointer]
-
-                            pointer += 1
-
-                    if string[pointer] == "[":
-                        if string[pointer + 1] != "]":
-                            while string[pointer + 1] != "]":
-                                child, delta = load(string[pointer + 1:], Node())
-                                pointer += delta
-                                node.childs.append(child)
-                        pointer += 1
-
-                    if string[pointer] == "}":
-                        if first == True:
-                            return node
-                        else:
-                            return node, pointer + 1
+        if file[pointer] == "{":
+            pointer += 1
+            while True:
+                if file[pointer] == '"':
                     pointer += 1
+                    while (file[pointer] != '"') and (file[pointer - 1] != '\ '[0]):
+                        node.text += file[pointer]
+
+                        pointer += 1
+
+                if file[pointer] == "[":
+                    if file[pointer + 1] != "]":
+                        while file[pointer + 1] != "]":
+                            child, delta = load(Node(), file[pointer + 1:],True)
+                            pointer += delta
+                            node.childs.append(child)
+                    pointer += 1
+
+                if file[pointer] == "}":
+                    if first is True:
+                        return node
+                    else:
+                        return node, pointer + 1
+                pointer += 1
 
         pointer += 1
 
 
 def create(node, text=""):
+    if text is None:
+        text = ""
     node.childs.append(Node(text))
 
 
 def delete(node, child):
+    if child == None:
+        return
     node.childs.pop(child)
 
 
@@ -115,11 +187,13 @@ def preview(node, child=None):
             print("  ", _child, " ", preview_text(node.childs[_child].text), sep="")
 
 
-def rpreview(node, space=0,):
+def rpreview(node, space=0):
+    if space is None:
+        space = 0
     number = 0
     print(node.text, sep="")
     for child in node.childs:
-        print(" " * space,number ,end=" ")
+        print(" " * space, number , end=" ")
         rpreview(child, space + 2)
         number += 1
     return
@@ -132,9 +206,14 @@ def str_list_to_string(lista):
     return res
 
 
-def node_navigator(node):
+functions = {"save": save, "csave": csave, "load": load, "create": create, "delete": delete, "edit": edit,
+             "see": see, "preview": preview, "rpreview": rpreview}
+
+
+def commands(node, is_subnode=False):
+    current_file = None
     while True:
-        args = input("notes >: ").split()
+        args = input(node.text + " >: ").split()
         cmd = args.pop(0)
 
         # argument_preparation
@@ -145,51 +224,30 @@ def node_navigator(node):
             if args[arg] is not None:
                 if args[arg].isnumeric() is True:
                     args[arg] = int(args[arg])
+        # argument checking
+
         # commands
 
         if cmd == "browse":
-            node_navigator(node.childs[args[0]])
-
+            commands(node.childs[args[0]], is_subnode=True)
         elif cmd == "goup":
+            if is_subnode is True:
+                print("can't go further up!")
             return
-
-        elif cmd == "create":
-            create(node, editor())
-
-        elif cmd == "delete":
-            delete(node, args[0])
-
-        elif cmd == "edit":
-            edit(node, args[0])
-
-        elif cmd == "see":
-            see(node, args[0])
-        elif cmd == "preview":
-            preview(node, args[0])
-
-        elif cmd == "rpreview":
-            rpreview(node)
-
-        elif cmd == "load":
-            try:
-                with open(args[0],"rt") as file:
-                    node = load(file.read())
-            except:
-                print("Error loading file")
-
-        elif cmd == "save":
-            with open(args[0], "wt") as file:
-                file.write(save(node))
-
-        elif cmd == "csave":
-            with open(args[0], "wt") as file:
-                file.write(csave(node))
-
         elif cmd == "exit":
             raise SystemExit
+
+        if check_sintax(Sintax_Matrix, cmd, args):
+            lul = functions.get(cmd, None)
+            lul(node, args[0])
         else:
             print("unknown command")
 
 
-node_navigator(Node())
+commands(Node())
+
+
+
+
+
 

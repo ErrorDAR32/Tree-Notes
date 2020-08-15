@@ -2,19 +2,23 @@ Sintax_Matrix = {"create": ((),),  # suposed to be a simple sintax, but theres p
 
                  "delete": (
                      (),
-                     (int,)),
+                     (int,),
+                     (str),),
 
                  "edit": (
                      (),
-                     (int,)),
+                     (int,),
+                     (str,),),
 
                  "see": (
                      (),
-                     (int,)),
+                     (int,),
+                     (str,),),
 
                  "preview": (
                      (),
-                     (int,)),
+                     (int,),
+                     (str,),),
 
                  "rpreview": ((),),
 
@@ -26,11 +30,17 @@ Sintax_Matrix = {"create": ((),),  # suposed to be a simple sintax, but theres p
                      (),
                      (str,)),
 
-                 "csave": (
-                     (),
-                     (str,)),
+                 # "csave": (
+                 #     (),
+                 #     (str,)),
+
                  "search": (
-                     (str,),)}
+                     (str,),),
+
+                 "alias": (
+                     (str,),
+                     (int, str),
+                     (str, str),)}
 
 
 def check_sintax(sintax_matrix: dict, command, args):
@@ -53,7 +63,7 @@ def check_sintax(sintax_matrix: dict, command, args):
         if valid:
             return True
 
-    return False
+    return "sintax"
 
 
 class Node:
@@ -62,15 +72,24 @@ class Node:
             childs = []
         self.childs = childs
         self.text = text
-        self.alias = ""  # for the future
+        self.alias = ""
+
+    def reset(self):
+        self.childs = []
+        self.text = ""
+        self.alias = ""
 
 
 def editor(string=""):  # coming soon
     return input(">->")
 
 
-def save(node, file, inden=0):
-    res = " " * inden + '{"'
+def save(node: Node, file, inden=0):
+    res = " " * inden + '{'
+    res += "("
+    res += node.alias
+    res += ")"
+    res += '"'
     res += node.text
     res += '"'
     res += "\n" + " " * inden + "["
@@ -85,15 +104,15 @@ def save(node, file, inden=0):
         return res
 
 
-def csave(node, file):
-    res = '{"'
-    res += node.text
-    res += '"'
-    res += "["
-    for child in node.childs:
-        res += csave(child, None)
-    res += "]"
-    res += "}"
+# def csave(node, file):
+#     res = '{"'
+#     res += node.text
+#     res += '"'
+#     res += "["
+#     for child in node.childs:
+#         res += csave(child, None)
+#     res += "]"
+#     res += "}"
 
     if file is not None:
         with open(file, "wt") as f:
@@ -107,10 +126,8 @@ def load(node, file, recursive=False):
         with open(file, "rt") as f:
             file = f.read()
 
-    first = False
-    if node is None:
-        first = True
-        node = Node()
+    if recursive is False:
+        node.reset()
     pointer = 0
 
     while True:
@@ -124,6 +141,12 @@ def load(node, file, recursive=False):
 
                         pointer += 1
 
+                if file[pointer] == '(':
+                    pointer += 1
+                    while file[pointer] != ')':
+                        node.alias += file[pointer]
+
+                        pointer += 1
                 if file[pointer] == "[":
                     if file[pointer + 1] != "]":
                         while file[pointer + 1] != "]":
@@ -133,10 +156,7 @@ def load(node, file, recursive=False):
                     pointer += 1
 
                 if file[pointer] == "}":
-                    if first is True:
-                        return node
-                    else:
-                        return node, pointer + 1
+                    return node, pointer + 1
                 pointer += 1
 
         pointer += 1
@@ -220,6 +240,21 @@ def search(node: Node, search_term, route=None):
     return result
 
 
+def alias(node, args):
+    if len(args) == 1:
+        node.alias = args[0]
+        return
+    if len(args) == 2:
+        if isinstance(args[0],int):
+            node.childs[args[0]].alias = args[1]
+        elif isinstance(args[0],str):
+            for child in node.childs:
+                if child.alias == args[0]:
+                    child.alias = args[1]
+    else:
+        print("incorrect number/alias")
+
+
 def str_list_to_string(lista):
     res = ""
     for word in lista:
@@ -227,30 +262,42 @@ def str_list_to_string(lista):
     return res
 
 
-functions = {"save": save, "csave": csave, "load": load, "create": create, "delete": delete, "edit": edit,
-             "see": see, "preview": preview, "rpreview": rpreview, "search": search}
+def tokenizer(string):
+    args = string.split()
+    cmd = args.pop(0)
+
+    # argument_preparation
+    if len(args) == 0:
+        args.append(None)
+
+    for arg in range(len(args)):
+        if args[arg] is not None:
+            if args[arg].isnumeric() is True:
+                args[arg] = int(args[arg])
+    return cmd, args
+
+def execute(node, function, arguments):
+    lul = functions.get(function, None)
+    if function == "alias":  # band aid before fixing rest of functions
+        lul(node, arguments)
+    else:
+        lul(node, arguments[0])
 
 
-def commands(node, is_subnode=False):
+functions = {"save": save, "load": load, "create": create, "delete": delete, "edit": edit, # removed csave for now
+             "see": see, "preview": preview, "rpreview": rpreview, "search": search, "alias": alias}
+
+
+def main(node, is_subnode=False):
     current_file = None
     while True:
-        args = input(node.text + " >: ").split()
-        cmd = args.pop(0)
+        cmd, args = tokenizer(input(node.alias + " >:"))
 
-        # argument_preparation
-        if len(args) == 0:
-            args.append(None)
 
-        for arg in range(len(args)):
-            if args[arg] is not None:
-                if args[arg].isnumeric() is True:
-                    args[arg] = int(args[arg])
-        # argument checking
-
-        # commands
+        # primordial commands
 
         if cmd == "browse":
-            commands(node.childs[args[0]], is_subnode=True)
+            main(node.childs[args[0]], is_subnode=True)
             continue
 
         elif cmd == "goup":
@@ -263,11 +310,19 @@ def commands(node, is_subnode=False):
         elif cmd == "exit":
             raise SystemExit
 
-        if check_sintax(Sintax_Matrix, cmd, args):
-            lul = functions.get(cmd, None)
-            lul(node, args[0])
-        else:
+        # the rest of the commands
+        check = check_sintax(Sintax_Matrix, cmd, args)
+
+        if check is True:
+            execute(node, cmd, args)
+        elif not check:
             print("unknown command")
+        elif check == "sintax":
+            print("incorrect sintax")
 
 
-commands(Node())
+
+if __name__ == "__main__":
+    import sys
+
+    main(Node())

@@ -1,13 +1,13 @@
 # Tree-Notes
 
 This small program is designed to manage, store and work with a tree structure of notes.
-each note represents a node in the tree, and each node can have multiple child nodes, and so fort.
+each note represents a node in the tree, and each node able to have have multiple child nodes, and so fort.
 
 To use it you just need to execute main.py file!
 
 ### Current Commands
 _note: more commands will be added in the future_
-- browse <node number>
+- browse node_number
     - To navigate to a subnode
 
 - goup
@@ -16,13 +16,13 @@ _note: more commands will be added in the future_
 - create
     - Creates a new subnode and prompts the "editor" (currently input()).
 
-- delete <number> 
+- delete number
     - Deletes a subnode.
 
-- edit <number>
+- edit number
     - Edits a subnode, if no argument is given edits the current browsed node.
 
-- see <number>
+- see number
     - Displays the text of a subnode, if no argument is given displays the current node text.
     
 - preview
@@ -31,13 +31,13 @@ _note: more commands will be added in the future_
 - rpreview
     - The same as preview, but it does it in a recursive manner.
 
-- load <file>
+- load file
     - Loads the contents of a file into memory, asuming it is a valid Tree-notes file.
 
-- save <file>
+- save file
     - Saves all the current loaded notes into human readable file.
     
-- csave <file
+- csave file
     - Saves the contents of memory into a non human friendly but more small file.
     
 - exit

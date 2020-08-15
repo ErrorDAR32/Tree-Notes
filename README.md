@@ -3,6 +3,8 @@
 This small program is designed to manage, store and work with a tree structure of notes.
 each note represents a node in the tree, and each node can have multiple child nodes, and so fort.
 
+To use it you just need to execute main.py file!
+
 ### Current Commands
 _note: more commands will be added in the future_
 - browse <node number>

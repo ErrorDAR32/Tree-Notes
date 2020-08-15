@@ -7,7 +7,7 @@ To use it you just need to execute main.py file!
 
 ### Current Commands
 _note: more commands will be added in the future_
-- browse <node number>
+- browse node_number
     - To navigate to a subnode
 
 - goup
@@ -16,13 +16,13 @@ _note: more commands will be added in the future_
 - create
     - Creates a new subnode and prompts the "editor" (currently input()).
 
-- delete <number> 
+- delete number
     - Deletes a subnode.
 
-- edit <number>
+- edit number
     - Edits a subnode, if no argument is given edits the current browsed node.
 
-- see <number>
+- see number
     - Displays the text of a subnode, if no argument is given displays the current node text.
     
 - preview

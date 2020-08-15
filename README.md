@@ -1,7 +1,7 @@
 # Tree-Notes
 
 This small program is designed to manage, store and work with a tree structure of notes.
-each note represents a node in the tree, and each node can have multiple child nodes, and so fort.
+each note represents a node in the tree, and each node able to have have multiple child nodes, and so fort.
 
 To use it you just need to execute main.py file!
 

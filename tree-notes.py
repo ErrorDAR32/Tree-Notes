@@ -155,7 +155,15 @@ def load(node, file, recursive=False):
     while True:
         if file[pointer] == "{":
             pointer += 1
+
             while True:
+                if file[pointer] == '(':
+                    pointer += 1
+                    while file[pointer] != ')':
+                        node.alias += file[pointer]
+
+                        pointer += 1
+
                 if file[pointer] == '"':
                     pointer += 1
                     while (file[pointer] != '"') and (file[pointer - 1] != '\ '[0]):
@@ -163,12 +171,7 @@ def load(node, file, recursive=False):
 
                         pointer += 1
 
-                if file[pointer] == '(':
-                    pointer += 1
-                    while file[pointer] != ')':
-                        node.alias += file[pointer]
 
-                        pointer += 1
                 if file[pointer] == "[":
                     if file[pointer + 1] != "]":
                         while file[pointer + 1] != "]":
@@ -323,6 +326,8 @@ def main(node, is_subnode=False):
 
 
 if __name__ == "__main__":
-    import sys
-
-    main(Node())
+    from sys import argv
+    root = Node()
+    if len(argv) > 0:
+        execute(Node,argv[0],argv[1:])
+    main()

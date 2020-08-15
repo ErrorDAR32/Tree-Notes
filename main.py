@@ -1,4 +1,4 @@
-Sintax_Matrix = {"create": ((),),  # suposed to be a simple sintax, but theres probably a better way to do this
+Sintax_Matrix = {"create":   ((),),  # suposed to be a simple sintax, but theres probably a better way to do this
 
                  "delete": (
                      (),
@@ -22,25 +22,18 @@ Sintax_Matrix = {"create": ((),),  # suposed to be a simple sintax, but theres p
 
                  "rpreview": ((),),
 
-                 "load": (
-                     (),
-                     (str,)),
+                 "load":     ((str,)),
 
-                 "save": (
-                     (),
-                     (str,)),
+                 "save":     ((str,)),
 
-                 # "csave": (
-                 #     (),
-                 #     (str,)),
+                 "csave":    ((str,)),
 
-                 "search": (
-                     (str,),),
+                 "search":   ((str,)),
 
                  "alias": (
                      (str,),
                      (int, str),
-                     (str, str),)}
+                     (str, str))}
 
 
 def check_sintax(sintax_matrix: dict, command, args):
@@ -64,6 +57,31 @@ def check_sintax(sintax_matrix: dict, command, args):
             return True
 
     return "sintax"
+
+
+def tokenizer(string):
+    args = string.split()
+    cmd = args.pop(0)
+
+    # argument_preparation
+    if len(args) == 0:
+        args.append(None)
+
+    for arg in range(len(args)):
+        if args[arg] is not None:
+            if args[arg].isnumeric() is True:
+                args[arg] = int(args[arg])
+    return cmd, args
+
+def execute(node, function, arguments):
+    try:
+        lul = functions.get(function, None)
+        if function == "alias":  # band aid before fixing rest of functions
+            lul(node, arguments)
+        else:
+            lul(node, arguments[0])
+    except:
+        print("Error while executing command")
 
 
 class Node:
@@ -104,15 +122,19 @@ def save(node: Node, file, inden=0):
         return res
 
 
-# def csave(node, file):
-#     res = '{"'
-#     res += node.text
-#     res += '"'
-#     res += "["
-#     for child in node.childs:
-#         res += csave(child, None)
-#     res += "]"
-#     res += "}"
+def csave(node, file):
+    res = '{'
+    res += "("
+    res += node.alias
+    res += ")"
+    res += '"'
+    res += node.text
+    res += '"'
+    res += "["
+    for child in node.childs:
+        res += csave(child, None)
+    res += "]"
+    res += "}"
 
     if file is not None:
         with open(file, "wt") as f:
@@ -260,28 +282,6 @@ def str_list_to_string(lista):
     for word in lista:
         res = res + word
     return res
-
-
-def tokenizer(string):
-    args = string.split()
-    cmd = args.pop(0)
-
-    # argument_preparation
-    if len(args) == 0:
-        args.append(None)
-
-    for arg in range(len(args)):
-        if args[arg] is not None:
-            if args[arg].isnumeric() is True:
-                args[arg] = int(args[arg])
-    return cmd, args
-
-def execute(node, function, arguments):
-    lul = functions.get(function, None)
-    if function == "alias":  # band aid before fixing rest of functions
-        lul(node, arguments)
-    else:
-        lul(node, arguments[0])
 
 
 functions = {"save": save, "load": load, "create": create, "delete": delete, "edit": edit, # removed csave for now

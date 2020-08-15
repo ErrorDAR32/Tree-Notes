@@ -1,41 +1,42 @@
-Sintax_Matrix = {"create"  : ((),),  # suposed to be a simple sintax, but theres probably a better way to do this
+Sintax_Matrix = {"create": ((),),  # suposed to be a simple sintax, but theres probably a better way to do this
 
-                 "delete"  : (
+                 "delete": (
                      (),
                      (int,)),
 
-                 "edit"    : (
+                 "edit": (
                      (),
                      (int,)),
 
-                 "see"     : (
+                 "see": (
                      (),
                      (int,)),
 
-                 "preview" : (
+                 "preview": (
                      (),
                      (int,)),
 
                  "rpreview": ((),),
 
-                 "load"    : (
+                 "load": (
                      (),
                      (str,)),
 
-                 "save"    : (
+                 "save": (
                      (),
                      (str,)),
 
-                 "csave"   : (
+                 "csave": (
                      (),
-                     (str,))}
+                     (str,)),
+                 "search": (
+                     (str,),)}
 
 
 def check_sintax(sintax_matrix: dict, command, args):
     command_sintax = sintax_matrix.get(command, None)
     if command_sintax is None:
         return False
-
 
     for schema in command_sintax:
         valid = True
@@ -74,7 +75,7 @@ def save(node, file, inden=0):
     res += '"'
     res += "\n" + " " * inden + "["
     for child in node.childs:
-        res += "\n" + save(child, None , inden + 4)
+        res += "\n" + save(child, None, inden + 4)
     res += "]"
     res += "}"
     if file is not None:
@@ -101,7 +102,7 @@ def csave(node, file):
         return res
 
 
-def load(node, file, recursive = False):
+def load(node, file, recursive=False):
     if recursive is False:
         with open(file, "rt") as f:
             file = f.read()
@@ -126,7 +127,7 @@ def load(node, file, recursive = False):
                 if file[pointer] == "[":
                     if file[pointer + 1] != "]":
                         while file[pointer + 1] != "]":
-                            child, delta = load(Node(), file[pointer + 1:],True)
+                            child, delta = load(Node(), file[pointer + 1:], True)
                             pointer += delta
                             node.childs.append(child)
                     pointer += 1
@@ -193,10 +194,30 @@ def rpreview(node, space=0):
     number = 0
     print(node.text, sep="")
     for child in node.childs:
-        print(" " * space, number , end=" ")
+        print(" " * space, number, end=" ")
         rpreview(child, space + 2)
         number += 1
     return
+
+
+def search(node: Node, search_term, route=None):
+    result = ""
+    if route is None:
+        route = preview_text(node.text)
+
+    place = node.text.find(search_term)
+    if place != -1:
+        result = f"'{search_term}' located at char {place} in {route}\n"
+
+    for child in range(len(node.childs)):
+        find = search(node.childs[child], search_term, route + "/" + str(child))
+        if find is not None:
+            result += find
+
+    if route == preview_text(node.text):
+        print(result)
+
+    return result
 
 
 def str_list_to_string(lista):
@@ -207,7 +228,7 @@ def str_list_to_string(lista):
 
 
 functions = {"save": save, "csave": csave, "load": load, "create": create, "delete": delete, "edit": edit,
-             "see": see, "preview": preview, "rpreview": rpreview}
+             "see": see, "preview": preview, "rpreview": rpreview, "search": search}
 
 
 def commands(node, is_subnode=False):
@@ -230,10 +251,15 @@ def commands(node, is_subnode=False):
 
         if cmd == "browse":
             commands(node.childs[args[0]], is_subnode=True)
+            continue
+
         elif cmd == "goup":
             if is_subnode is True:
+                return
+            else:
                 print("can't go further up!")
-            return
+            continue
+
         elif cmd == "exit":
             raise SystemExit
 
@@ -245,9 +271,3 @@ def commands(node, is_subnode=False):
 
 
 commands(Node())
-
-
-
-
-
-

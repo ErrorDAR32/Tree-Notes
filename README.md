@@ -31,13 +31,13 @@ _note: more commands will be added in the future_
 - rpreview
     - The same as preview, but it does it in a recursive manner.
 
-- load <file>
+- load file
     - Loads the contents of a file into memory, asuming it is a valid Tree-notes file.
 
-- save <file>
+- save file
     - Saves all the current loaded notes into human readable file.
     
-- csave <file
+- csave file
     - Saves the contents of memory into a non human friendly but more small file.
     
 - exit

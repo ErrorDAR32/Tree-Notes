@@ -91,6 +91,8 @@ def check_sintax(sintax_matrix: dict, command, args):
 # command parsing and sintax checks
 
 def tokenizer(string):
+    if (not isinstance(string,str) or (len(string) <= 1)):
+        return [None,None]
     args = string.split()
     cmd = args.pop(0)
 
@@ -107,12 +109,13 @@ def tokenizer(string):
 
 
 def execute(node, function, arguments):
-    try:
+    global root
+    if function in ["save","csave","load"]:
+        lul = functions.get(function, None)  # yeah, lul, i know, im creative
+        lul(root, arguments)
+    else:
         lul = functions.get(function, None)  # yeah, lul, i know, im creative
         lul(node, arguments)
-    except:
-        print(f"Error while executing {function}")
-        return
 
 # utility functions
 
@@ -135,7 +138,6 @@ def descision(prompt:str,options=[["Y","y"],["N","n"]]):
                 if option == choice:
                     return option
 
-# commands
 
 def alias_to_index(node, args):
     for child in range(len(node.childs)):
@@ -143,12 +145,16 @@ def alias_to_index(node, args):
             return child
     return False
 
+# commands
 
-def editor(string=""):  # coming soon
+def editor(string=""):  # TODO implement this 'fore 1.0
     return input(">->")
 
 
 def save(node: Node, args, inden=0):
+    """save <filename>
+        used to store human readable version of the current note structure, if no argument is given it will try to use
+        the last file name used by save, csave, or load """
     global recent_file
 
     if args is not None:
@@ -156,9 +162,7 @@ def save(node: Node, args, inden=0):
             if recent_file == "":
                 print("argument missing, and no recent file detected")
                 return
-            if descision(f"do you want to save to {recent_file}? (Y/N)") == 0:
-                args = [recent_file]
-            else:
+            if descision(f"do you want to save to {recent_file}? (Y/N)") == 1:
                 return
         else:
             recent_file = args[0]
@@ -177,7 +181,7 @@ def save(node: Node, args, inden=0):
     res += "}"
     if args is not None:
         try:
-            with open(args[0], "wt") as f:
+            with open(recent_file, "wt") as f:
                 f.write(res)
             print("Save successful")
         except:
@@ -188,15 +192,16 @@ def save(node: Node, args, inden=0):
 
 
 def csave(node, args):
+    """csave <filename>
+    used to store a more compact version of the current note structure, if no argument is given it will try to use
+    the last file name used by save, csave, or load """
     global recent_file
     if args is not None:
         if args[0] is None:
             if recent_file == "":
                 print("argument missing, and no recent file detected")
                 return
-            if descision(f"do you want to save to {recent_file}? (Y/N)") == 0:
-                args = [recent_file]
-            else:
+            if descision(f"do you want to save to {recent_file}? (Y/N)") == 1:
                 return
         else:
             recent_file = args[0]
@@ -216,7 +221,7 @@ def csave(node, args):
 
     if args is not None:
         try:
-            with open(args[0], "wt") as f:
+            with open(recent_file, "wt") as f:
                 f.write(res)
             print("Save successful")
         except:
@@ -227,7 +232,9 @@ def csave(node, args):
 
 
 def load(node, args, recursive=False):
-    node.reset()
+    """load <filename>
+    used to load a note tree from storage, if no argument is given it will try to use the last file name used by
+    save, csave, or load"""
     global recent_file
     file = ""
     if recursive is False:
@@ -235,64 +242,69 @@ def load(node, args, recursive=False):
             if recent_file == "":
                 print("argument missing, and no recent file detected")
                 return
-            if descision(f"do you want to load {recent_file}? (Y/N)") == 0:
-                args = [recent_file]
-            else:
+            if descision(f"do you want to load {recent_file}? (Y/N)") == 1:
                 return
         else:
             recent_file = args[0]
+
         try:
             with open(recent_file, "rt") as f:
                 file = f.read()
         except:
             print(f"Error while reading {recent_file}")
+            return
     else:
         file = args
 
     pointer = 0
 
-    while True:
-        if file[pointer] == "{":
-            pointer += 1
+    node.reset()
 
-            while True:
-                if file[pointer] == '(':
-                    pointer += 1
-                    while file[pointer] != ')':
-                        node.alias += file[pointer]
-
-                        pointer += 1
-
-                if file[pointer] == '"':
-                    pointer += 1
-                    while (file[pointer] != '"') and (file[pointer - 1] != '\ '[0]):
-                        node.text += file[pointer]
-
-                        pointer += 1
-
-                if file[pointer] == "[":
-                    if file[pointer + 1] != "]":
-                        while file[pointer + 1] != "]":
-                            child, delta = load(Node(), file[pointer + 1:], True)
-                            pointer += delta
-                            node.childs.append(child)
-                    pointer += 1
-
-                if file[pointer] == "}":
-                    if recursive is False:
-                        print(f"Loaded {recent_file} succesfully")
-                        return
-                    else:
-                        return node, pointer + 1
-
+    try:
+        while True:
+            if file[pointer] == "{":
                 pointer += 1
 
-        pointer += 1
+                while True:
+                    if file[pointer] == '(':
+                        pointer += 1
+                        while file[pointer] != ')':
+                            node.alias += file[pointer]
 
-        # print(f"Error while parsing {recent_file}")
+                            pointer += 1
 
+                    if file[pointer] == '"':
+                        pointer += 1
+                        while (file[pointer] != '"') and (file[pointer - 1] != '\ '[0]):
+                            node.text += file[pointer]
+
+                            pointer += 1
+
+                    if file[pointer] == "[":
+                        if file[pointer + 1] != "]":
+                            while file[pointer + 1] != "]":
+                                child, delta = load(Node(), file[pointer + 1:], True)
+                                pointer += delta
+                                node.childs.append(child)
+                        pointer += 1
+
+                    if file[pointer] == "}":
+                        if recursive is False:
+                            print(f"Loaded {recent_file} succesfully")
+                            return
+                        else:
+                            return node, pointer + 1
+
+                    pointer += 1
+
+            pointer += 1
+    except:
+        print(f"Error while parsing {recent_file}")
+        return
 
 def create(node, args):
+    """create <alias>
+    used to create a new node as a child of the current node, if no argument is given it wors just fine"""
     if args[0] is None:
         args[0] = ""
     if isinstance(args[0], str):
@@ -300,6 +312,8 @@ def create(node, args):
 
 
 def delete(node, args):
+    """delete <node>
+    used to delete a child of the current node"""
     if isinstance(args[0], str):
         args[0] = alias_to_index(node, args[0])
     if args[0] is not False:
@@ -307,18 +321,25 @@ def delete(node, args):
 
 
 def edit(node, args):
+    """edit <node>
+    used to edit the text of a node"""
     child = args[0]
-
     if isinstance(child, str):
         child = alias_to_index(node, child)
     if child is not False:
         if child is None:
             node.text = editor()
+            return
+        if child >= len(node.childs):
+            print("wrong index")
+            return
         else:
             node.childs[child].text = editor(node.childs[child].text)
 
 
 def see(node, args):
+    """see <node>
+    used to see the text of the current node or a child of it"""
     child = args[0]
 
     if isinstance(child, str):
@@ -335,71 +356,95 @@ def see(node, args):
 
 
 def preview(node, args):
-    child = args[0]
-
-    if node.has_alias() == True:
-        print(node.alias)
+    """preview <node>
+    used to visualize al chids from current node, or assigned node in argument"""
+    if args[0] is not None:
+        child = args[0]
+        if isinstance(child, str):
+            child = alias_to_index(node, child)
+        if child is not False:
+            preview(node.childs[child],[None])
+            return
     else:
-        if node.text == "":
-            print("Node")
+        if node.has_alias():
+            name = node.alias
         else:
-            print(preview_text(node.text))
+            if node.text == "":
+                name = "Node"
+        print(name, ":", preview_text(node.text))
 
-    if isinstance(child, str):
-        child = alias_to_index(node, child)
-    if child is not False:
-        if child is None:
-            if child is not None:
-                print(preview_text(node.childs[child].text))
+        for child in range(len(node.childs)):
+            name = ""
+            if node.childs[child].has_alias():
+                name = node.childs[child].alias
             else:
-                print(node.text)
-                for _child in range(len(node.childs)):
-                    if node.childs[_child].has_alias():
-                        name = node.childs[_child].alias
-                    else:
-                        name = _child
-                    print(" ", name, preview_text(node.childs[_child].text), ": ")
+                name = child
+
+            print(" ", name, ":", preview_text(node.childs[child].text))
 
 
 def rpreview(node, space=0):
-    if space != 0:
+    """ rpreview
+    used to recursively display all subnodes, to visualize the structure"""
+    if not isinstance(space,int):
         space = 0
-    number = 0
-    print(preview_text(node.text))
+        if node.has_alias():
+            print(node.alias)
+        else:
+            if node.text == "":
+                print("Node")
+            else:
+                print(preview_text(node.text))
+
 
     for child in range(len(node.childs)):
-        name = child
-        if node.childs[child].has_alias() == True:
-            name = node.childs[child].alias
 
-        print(" " * space, name, end=": ")
+        if node.childs[child].has_alias():
+            name = node.childs[child].alias
+        else:
+            name = child
+
+
+        print(" " * space, name,":", preview_text(node.childs[child].text))
         rpreview(node.childs[child], space + 2)
-        number += 1
+
     return
 
 
 def search(node: Node, args, route=None):
-    search_term = args[0]
-    result = ""
+    """search <search term>
+        recursive search for search term"""
     if route is None:
-        route = preview_text(node.text)
+        if node.has_alias():
+            route = node.alias + "/"
+        else:
+            route = "node" + "/"
 
-    place = node.text.find(search_term)
+    if isinstance(args, list):
+        term = args[0]
+    else:
+        term = args
+
+    place = node.text.find(term)
     if place != -1:
-        result = f"'{search_term}' located at char {place} in {route}\n"
+        print(f"{term} found in text of {route} in char {place}")
+
+    place = node.alias.find(term)
+    if place != -1:
+        print(f"{term} found in alias of {route} in char {place}")
 
     for child in range(len(node.childs)):
-        find = search(node.childs[child], search_term, route + "/" + str(child))
-        if find is not None:
-            result += find
+        if node.childs[child].has_alias:
+            name = node.childs[child].alias
+        else:
+            name = child
 
-    if route == preview_text(node.text):
-        print(result)
-
-    return result
+        search(node.childs[child], term, route + name)
 
 
 def alias_node(node, args):
+    """alias <alias> / <index> <alias> / <old alias> <new alias>
+        used to alias a note, to avoid using its index and remembering it easier"""
     if len(args) == 1:
         node.alias = args[0]
         return
@@ -416,6 +461,41 @@ def alias_node(node, args):
                 node.childs[index].alias = newalias
     else:
         print("incorrect number/alias")
+
+def help(command):
+    if command is None:
+        print("list of commands:")
+        print("help\nbrowse\ngoup\nexit")
+        for command in functions.keys():
+            print(command)
+        return
+
+    if command == "help":
+        print(
+        """help <command>
+        used to display help""")
+        return
+    elif command == "browse":
+        print(
+            """browse <node>
+            used to navigate down the structure"""
+        )
+        return
+    elif command == "goup":
+        print("""
+        goup
+        the contrary to browse, to go back up the structure""")
+        return
+    elif command == "exit":
+        print("exit\nused to exit the program, it prompts a save question before leaving")
+        return
+
+    elif isinstance(command,str):
+        function = functions.get(command,None)
+        if function is None:
+            print("Unknown command")
+        else:
+            print(function.__doc__)
 
 
 functions = {"save": save, "csave": csave, "load": load, "create": create, "delete": delete, "edit": edit,
@@ -435,8 +515,16 @@ def main(node, is_subnode=False):
         # primordial commands
         if cmd == "browse":
             if isinstance(args[0], str):
-                args[0] = alias_to_index(args[0])
-            main(node.childs[args[0]], is_subnode=True)
+                args[0] = alias_to_index(node,args[0])
+
+            if args[0] is not None:
+                if args[0] is not False:
+                    main(node.childs[args[0]], is_subnode=True)
+
+                elif args[0] < node.childs:
+                    main(node.childs[args[0]], is_subnode=True)
+                else:
+                    print("unknown alias/node")
             continue
 
         elif cmd == "goup":
@@ -451,6 +539,10 @@ def main(node, is_subnode=False):
                 if descision(f"do you want to save to {recent_file}? (Y/N)") == 0:
                     csave(root,recent_file)
             raise SystemExit
+
+        elif cmd == "help":
+            help(args[0])
+            continue
 
         # the rest of the commands
         check = check_sintax(Sintax_Matrix, cmd, args)
@@ -470,4 +562,8 @@ if __name__ == "__main__":
     if len(argv) > 1:
         print("CLI args detected. Executing...")
         execute(root, argv[1], argv[2:])
+
+    print("Tree-notes v0.95")
+    print("type help for help for a list of commands or help <command> for more detailed help")
+
     main(root)

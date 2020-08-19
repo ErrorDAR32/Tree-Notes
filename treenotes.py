@@ -564,6 +564,7 @@ if __name__ == "__main__":
         execute(root, argv[1], argv[2:])
 
     print("Tree-notes v0.95")
+    print("see github.com/ErrorDAR32/Tree-Notes for the source")
     print("type help for help for a list of commands or help <command> for more detailed help")
 
     main(root)

@@ -871,7 +871,7 @@ if __name__ == "__main__":
         print("CLI args detected. Executing...")
         execute(root, argv[1], argv[2:])
 
-    print("Tree-notes v0.95")
+    print("Tree-notes v1.0")
     print("see github.com/ErrorDAR32/Tree-Notes for the source")
     print("type help for help for a list of commands or help <command> for more detailed help")
 

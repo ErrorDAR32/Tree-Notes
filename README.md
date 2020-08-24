@@ -14,6 +14,6 @@ basic instructions: help, create, delete, edit, see
 
 basic navigation: browse, goup
 
-saving and loading: load, save, csave
+saving and loading: load, save
 
 other utilities: preview, rpreview, search, alias

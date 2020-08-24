@@ -1,4 +1,8 @@
+#!/usr/bin/python3
 # suposed to be a simple sintax, but theres probably a better way to do this
+import curses
+
+
 Sintax_Matrix = {
     "create": (
         (),
@@ -27,6 +31,10 @@ Sintax_Matrix = {
     "rpreview": ((),),
 
     "load": (
+        (),
+        (str,),),
+
+    "oldload": (
         (),
         (str,),),
 
@@ -75,6 +83,9 @@ def check_sintax(sintax_matrix: dict, command, args):
         valid = True
         if len(schema) == 0:
             schema = (type(None),)
+        while len(schema) > len(args):
+            args.append(None)
+
         for scheme_element, arg in zip(schema, args):  # extra arguments are tottaly ignored
 
             if isinstance(arg, scheme_element):
@@ -94,17 +105,23 @@ def tokenizer(string):
     if (not isinstance(string,str) or (len(string) <= 1)):
         return [None,None]
     args = string.split()
+
     cmd = args.pop(0)
 
     # argument_preparation
     if len(args) == 0:
         args.append(None)
-
+    thingys = ('"',"'")
     for arg in range(len(args)):
         if args[arg] is not None:
 
+            if (args[arg][0] in thingys) and (args[arg][-1] in thingys):
+                args[arg] = str(args[arg][1:-1])
+                continue
             if args[arg].isnumeric() is True:
                 args[arg] = int(args[arg])
+                continue
+
     return cmd, args
 
 
@@ -118,6 +135,71 @@ def execute(node, function, arguments):
         lul(node, arguments)
 
 # utility functions
+
+class filewrapper:
+    def __init__(self, string: str):
+        self.string = string
+        self.charptr = 0
+        self.char = string[0]
+
+    def checkcharptr(self):
+        if self.charptr == len(self.string):
+            return False
+        return True
+    def nextchar(self):
+        if self.checkcharptr():
+            self.charptr += 1
+            self.char = self.string[self.charptr]
+            return self.string[self.charptr]
+        return None
+
+    def currchar(self):
+        return self.string[self.charptr]
+
+    def lastchar(self):
+        return self.string[self.charptr - 1]
+
+
+def parsenode(file: filewrapper):
+    node = Node()
+    props = ("a","t","c")
+    while True:
+        if file.nextchar() in props:
+            if file.currchar() == "a":
+                node.alias = parseproperty(file)
+            elif file.currchar() == "t":
+                node.text = parseproperty(file)
+            elif file.currchar() == "c":
+                node.childs = parseproperty(file)
+        elif file.currchar() == "}":
+            return node
+
+
+def parsearray(file: filewrapper):
+    array = []
+    while True:
+        if file.nextchar() == "]":
+            return array
+        elif file.currchar() == "{":
+            array.append(parsenode(file))
+
+
+def parsestring(file: filewrapper):
+    string = ""
+    while True:
+        file.nextchar()
+        if (file.currchar() == '"') and (file.lastchar() != '\ '[0]):
+            return string
+        string += file.currchar()
+
+
+def parseproperty(file: filewrapper):
+    while True:
+        if file.nextchar() == '"':
+            return parsestring(file)
+        elif file.currchar() == '[':
+            return parsearray(file)
+
 
 def preview_text(text):
     if len(text) <= 30:
@@ -147,51 +229,204 @@ def alias_to_index(node, args):
 
 # commands
 
-def editor(string=""):  # TODO implement this 'fore 1.0
-    return input(">->")
+def editor(string: str,toptext = "press crtl + x to exit"):
+    # util
+    class textwrapper:
+        text = [[], ]
+        y = 0
+        x = 0
 
-
-def save(node: Node, args, inden=0):
-    """save <filename>
-        used to store human readable version of the current note structure, if no argument is given it will try to use
-        the last file name used by save, csave, or load """
-    global recent_file
-
-    if args is not None:
-        if args[0] is None:
-            if recent_file == "":
-                print("argument missing, and no recent file detected")
+        def __init__(self, text: str):
+            if text is None:
                 return
-            if descision(f"do you want to save to {recent_file}? (Y/N)") == 1:
-                return
-        else:
-            recent_file = args[0]
+            self.text = []
+            temp = text.split("\n")
+            for line in temp:
+                self.text.append(list(line))
 
-    res = " " * inden + '{'
-    res += "("
-    res += node.alias
-    res += ")"
-    res += '"'
-    res += node.text
-    res += '"'
-    res += "\n" + " " * inden + "["
-    for child in node.childs:
-        res += "\n" + save(child, None, inden + 4)
-    res += "]"
-    res += "}"
-    if args is not None:
-        try:
-            with open(recent_file, "wt") as f:
-                f.write(res)
-            print("Save successful")
-        except:
-            print("filename error")
-            return
+        def __len__(self):
+            return len(self.text)
+
+        def __iter__(self):
+            return self.text.__iter__()
+
+        def splitline(self):
+            self.text.insert(self.y + 1, self.text[self.y][self.x:])
+            self.text[self.y] = self.text[self.y][:self.x]
+            self.y += 1
+            self.x = 0
+
+        def unite_lines(self,): # only to use when cursor is at x == 0
+            if self.y != len(self.text) - 1:
+                self.text[self.y] += self.text[self.y + 1]
+                self.text.pop(self.y + 1)
+
+        def insert_char(self, char, y=None, x=None, ):
+            if x is None:
+                x = self.x
+            if y is None:
+                y = self.y
+
+            if char == "\n":
+                self.splitline()
+            else:
+                self.text[y].insert(x, char)
+                self.x += 1
+
+        def delete_backspace(self):
+            if self.x != 0:
+                self.text[self.y].pop(self.x - 1)
+                self.move_left()
+            elif self.y != 0: # when deleteing a line
+                self.move_up() # unite_lines is always the current line with the next line
+                self.x = len(self.text[self.y])
+                self.unite_lines()
+
+        def delete_supr(self):
+            if self.x != len(self.text[self.y]):
+                self.text[self.y].pop(self.x)
+            elif self.y != len(self.text) - 1:  # when deleteing a line
+                self.x = len(self.text[self.y])
+                self.unite_lines()
+
+        def adjust_x(self):
+            if self.x > len(self.text[self.y]):
+                self.x = len(self.text[self.y])
+
+        def move_left(self):
+            if self.x != 0:
+                self.x -= 1
+            elif self.y != 0:
+                self.move_up()
+                self.x = len(self.text[self.y])
+
+        def move_right(self):
+            if not (self.x >= len(self.text[self.y])):
+                self.x += 1
+            elif self.y != len(self.text) - 1:
+                self.move_down()
+                self.x = 0
+
+        def move_up(self):
+            if self.y != 0:
+                self.y -= 1
+                self.adjust_x()
+
+        def move_down(self):
+            if not (self.y >= len(self.text) - 1):
+                self.y += 1
+                self.adjust_x()
+
+        def flush(self):
+            res = ""
+            for line in range(len(self.text)):
+                for char in range(len(self.text[line])):
+                    res += self.text[line][char]
+
+                if line != len(self.text) - 1:
+                    res+= "\n"
+            return res
+
+
+    class text_renderer:
+
+        text = textwrapper("")
+        x_txt_offset = 0
+        y_txt_offset = 0
+
+        def __init__(self,stdscr: curses.window, text: textwrapper):
+            self.text = text
+            self.stdscr = stdscr
+
+        def render(self,yfst=0, xfst=0,key="",stdscr=None):
+            if stdscr is None:
+                stdscr = self.stdscr
+            stdscr.clear()
+            stdscr.refresh()
+            stdscr.move(0, 0)
+
+            lines = curses.LINES - yfst
+            columns = curses.COLS - xfst
+
+            if self.text.x > self.x_txt_offset + columns - 1:
+                self.x_txt_offset = self.text.x - columns + 1
+            elif self.text.x < self.x_txt_offset:
+                self.x_txt_offset = self.x_txt_offset - (self.x_txt_offset - self.text.x)
+
+            if self.text.y > self.y_txt_offset + lines - 1:
+                self.y_txt_offset = self.text.y - lines + 1
+            elif self.text.y < self.y_txt_offset:
+                self.y_txt_offset = self.y_txt_offset - (self.y_txt_offset - self.text.y)
+
+            # rendering the text:
+            for line in range(len(self.text.text)):
+                if (line < self.y_txt_offset) or (line > self.y_txt_offset + lines - yfst):
+                    continue
+                stdscr.move(line - self.y_txt_offset + yfst, 0 + xfst)
+
+                for char in range(len(self.text.text[line])):
+                    if (char < self.x_txt_offset) or (char > self.x_txt_offset + columns - 1) :
+                        continue
+                    stdscr.addch(self.text.text[line][char])
+
+            # position cursos to where user is editing
+            stdscr.move(self.text.y + yfst - self.y_txt_offset, self.text.x + xfst - self.x_txt_offset)
+            stdscr.refresh()
+
+
+    # main function
+    def main(stdscr: curses.window):
+        # initialization
+        curses.curs_set(True)
+        curses.noecho()
+        text = textwrapper(string)
+        renderer = text_renderer(stdscr,text)
+
+        # main_loop
+        key = ""
+        while True:
+            renderer.render(1, 1, key)
+            coords = stdscr.getyx()
+            stdscr.move(0,0)
+            stdscr.addstr(toptext)
+            stdscr.move(coords[0], coords[1])
+
+
+            key = stdscr.getkey()
+
+            if key == "KEY_LEFT":
+                text.move_left()
+            elif key == "KEY_RIGHT":
+                text.move_right()
+            elif key == "KEY_UP":
+                text.move_up()
+            elif key == "KEY_DOWN":
+                text.move_down()
+            elif key == "KEY_BACKSPACE":
+                text.delete_backspace()
+            elif key == "KEY_DC":
+                text.delete_supr()
+            elif key == "\x18":
+                stdscr.move(0,0)
+                stdscr.addstr(" do you want to save? y/n")
+                while True:
+                    key = stdscr.getkey()
+                    if key == "y":
+                        return text.flush()
+                    elif key == "n":
+                        return False
+
+            elif len(key) == 1:
+                text.insert_char(key)
+
+    saved = curses.wrapper(main)
+    if saved == False:
+        return False
     else:
-        return res
+        return saved
 
 
-def csave(node, args):
+def save(node, args):
     """csave <filename>
     used to store a more compact version of the current note structure, if no argument is given it will try to use
     the last file name used by save, csave, or load """
@@ -207,15 +442,17 @@ def csave(node, args):
             recent_file = args[0]
 
     res = '{'
-    res += "("
-    res += node.alias
-    res += ")"
-    res += '"'
-    res += node.text
-    res += '"'
+    res += 'a'
+    res += '"' + node.alias + '"'
+    res += ','
+    res += 't'
+    res += '"' + node.text + '"'
+    res += ','
+    res += 'c'
     res += "["
     for child in node.childs:
-        res += csave(child, None)
+        res += save(child, None)
+        res += ","
     res += "]"
     res += "}"
 
@@ -225,13 +462,13 @@ def csave(node, args):
                 f.write(res)
             print("Save successful")
         except:
-            print("Filename error")
+            print("error while reading file")
             return
     else:
         return res
 
 
-def load(node, args, recursive=False):
+def oldload(node, args, recursive=False):
     """load <filename>
     used to load a note tree from storage, if no argument is given it will try to use the last file name used by
     save, csave, or load"""
@@ -283,7 +520,7 @@ def load(node, args, recursive=False):
                     if file[pointer] == "[":
                         if file[pointer + 1] != "]":
                             while file[pointer + 1] != "]":
-                                child, delta = load(Node(), file[pointer + 1:], True)
+                                child, delta = oldload(Node(), file[pointer + 1:], True)
                                 pointer += delta
                                 node.childs.append(child)
                         pointer += 1
@@ -301,6 +538,41 @@ def load(node, args, recursive=False):
     except:
         print(f"Error while parsing {recent_file}")
         return
+
+
+def load(node, args):
+    """load <filename>
+    used to load a note tree from storage, if no argument is given it will try to use the last file name used by
+    save, csave, or load"""
+    global recent_file
+    if args[0] is None:
+        if recent_file == "":
+            print("argument missing, and no recent file detected")
+            return
+        elif descision(f"do you want to load {recent_file}? (Y/N)") == 1:
+            return
+    else:
+        recent_file = args[0]
+
+    # try:
+        with open(recent_file, "rt") as f:
+            file = filewrapper(f.read())
+    # except:
+    #     print(f"Error while reading {recent_file}")
+    #     return
+
+
+    while True:
+        if file.currchar() == "{":
+            newnode = parsenode(file)
+            node.reset()
+            node.text = newnode.text
+            node.childs = newnode.childs
+            node.alias = newnode.alias
+
+            break
+        file.nextchar()
+
 
 def create(node, args):
     """create <alias>
@@ -328,7 +600,7 @@ def edit(node, args):
         child = alias_to_index(node, child)
     if child is not False:
         if child is None:
-            node.text = editor()
+            node.text = editor(node.text)
             return
         if child >= len(node.childs):
             print("wrong index")
@@ -369,8 +641,8 @@ def preview(node, args):
         if node.has_alias():
             name = node.alias
         else:
-            if node.text == "":
-                name = "Node"
+            name = "node"
+
         print(name, ":", preview_text(node.text))
 
         for child in range(len(node.childs)):
@@ -406,7 +678,7 @@ def rpreview(node, space=0):
 
 
         print(" " * space, name,":", preview_text(node.childs[child].text))
-        rpreview(node.childs[child], space + 2)
+        rpreview(node.childs[child], space + 4)
 
     return
 
@@ -428,18 +700,18 @@ def search(node: Node, args, route=None):
     place = node.text.find(term)
     if place != -1:
         print(f"{term} found in text of {route} in char {place}")
-
+        print(node.alias)
     place = node.alias.find(term)
     if place != -1:
         print(f"{term} found in alias of {route} in char {place}")
 
     for child in range(len(node.childs)):
-        if node.childs[child].has_alias:
+        if node.childs[child].has_alias():
             name = node.childs[child].alias
         else:
-            name = child
+            name = str(child)
 
-        search(node.childs[child], term, route + name)
+        search(node.childs[child], term, route + name + "/")
 
 
 def alias_node(node, args):
@@ -461,6 +733,7 @@ def alias_node(node, args):
                 node.childs[index].alias = newalias
     else:
         print("incorrect number/alias")
+
 
 def help(command):
     if command is None:
@@ -498,7 +771,7 @@ def help(command):
             print(function.__doc__)
 
 
-functions = {"save": save, "csave": csave, "load": load, "create": create, "delete": delete, "edit": edit,
+functions = {"save": save, "load": load,"oldload": oldload, "create": create, "delete": delete, "edit": edit,
              "see": see, "preview": preview, "rpreview": rpreview, "search": search, "alias": alias_node}
 
 
@@ -519,12 +792,10 @@ def main(node, is_subnode=False):
 
             if args[0] is not None:
                 if args[0] is not False:
-                    main(node.childs[args[0]], is_subnode=True)
-
-                elif args[0] < node.childs:
-                    main(node.childs[args[0]], is_subnode=True)
-                else:
-                    print("unknown alias/node")
+                    if args[0] < len(node.childs):
+                        main(node.childs[args[0]], is_subnode=True)
+                    else:
+                        print("unknown alias/node")
             continue
 
         elif cmd == "goup":
@@ -537,7 +808,7 @@ def main(node, is_subnode=False):
         elif cmd == "exit":
             if recent_file != "":
                 if descision(f"do you want to save to {recent_file}? (Y/N)") == 0:
-                    csave(root,recent_file)
+                    save(root,recent_file)
             raise SystemExit
 
         elif cmd == "help":

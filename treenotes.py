@@ -759,7 +759,7 @@ def help(command):
         return
     elif command == "browse":
         print(
-            """browse <node>
+            """browse <subnode> *optionals: <subnode> <subnode>...
             used to navigate down the structure"""
         )
         return

@@ -127,7 +127,9 @@ def tokenizer(string):
 
 def execute(node, function, arguments):
     global root
-    if function in ["save","csave","load"]:
+    global gotoroot
+    if function in ["save","load"]:
+        gotoroot = True
         lul = functions.get(function, None)  # yeah, lul, i know, im creative
         lul(root, arguments)
     else:
@@ -201,11 +203,18 @@ def parseproperty(file: filewrapper):
             return parsearray(file)
 
 
-def preview_text(text):
-    if len(text) <= 30:
+def preview_text(text,iden=0):
+    res = ""
+    for char in range(len(text)):
+        res += text[char]
+        if text[char] == "\n":
+            for space in range(iden):
+                res += " "
+
+    if len(res) <= 64:
         return text
     else:
-        return text[:30] + "..."
+        return res[:64] + "..."
 
 
 def descision(prompt:str,options=[["Y","y"],["N","n"]]):
@@ -427,7 +436,7 @@ def editor(string: str,toptext = "press crtl + x to exit"):
 
 
 def save(node, args):
-    """csave <filename>
+    """save <filename>
     used to store a more compact version of the current note structure, if no argument is given it will try to use
     the last file name used by save, csave, or load """
     global recent_file
@@ -554,12 +563,12 @@ def load(node, args):
     else:
         recent_file = args[0]
 
-    # try:
+    try:
         with open(recent_file, "rt") as f:
             file = filewrapper(f.read())
-    # except:
-    #     print(f"Error while reading {recent_file}")
-    #     return
+    except:
+        print(f"Error while reading {recent_file}")
+        return
 
 
     while True:
@@ -643,7 +652,7 @@ def preview(node, args):
         else:
             name = "node"
 
-        print(name, ":", preview_text(node.text))
+        print(name, ":", preview_text(node.text,len(name) + 3))
 
         for child in range(len(node.childs)):
             name = ""
@@ -652,7 +661,7 @@ def preview(node, args):
             else:
                 name = child
 
-            print(" ", name, ":", preview_text(node.childs[child].text))
+            print(" ", name, ":", preview_text(node.childs[child].text,len(name) + 5))
 
 
 def rpreview(node, space=0):
@@ -677,7 +686,7 @@ def rpreview(node, space=0):
             name = child
 
 
-        print(" " * space, name,":", preview_text(node.childs[child].text))
+        print(" " * space, name,":", preview_text(node.childs[child].text,len(name) + space + 4))
         rpreview(node.childs[child], space + 4)
 
     return
@@ -776,17 +785,45 @@ functions = {"save": save, "load": load,"oldload": oldload, "create": create, "d
 
 
 recent_file = ""
-
+gotoroot = False
+multibrowse = []
 # main function and loop
 
 def main(node, is_subnode=False):
     global root
+    global gotoroot
+    global multibrowse
     current_file = None
+    cmd = ""
+    args = [None]
     while True:
-        cmd, args = tokenizer(input(str(node.alias) + " >: "))
+        if gotoroot is True:
+            if is_subnode is True:
+                return
+            else:
+                gotoroot = False
+
+        if len(multibrowse) == 0:
+            cmd, args = tokenizer(input(str(node.alias) + " >: "))
+        else:
+            if isinstance(multibrowse[0], str):
+                multibrowse[0] = alias_to_index(node,multibrowse[0])
+
+            if multibrowse[0] is not None:
+                if multibrowse[0] is not False:
+                    if multibrowse[0] < len(node.childs):
+                        main(node.childs[multibrowse.pop(0)], is_subnode=True)
+                    else:
+                        print("unknown alias/node")
+                        multibrowse = []
+            continue
 
         # primordial commands
         if cmd == "browse":
+            if len(args) > 1:
+                multibrowse = args
+                continue
+
             if isinstance(args[0], str):
                 args[0] = alias_to_index(node,args[0])
 

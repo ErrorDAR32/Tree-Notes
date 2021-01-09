@@ -12,7 +12,7 @@ To use it you just need to execute main.py file from your nearest console!
 
 basic instructions: help, create, delete, edit, see
 
-basic navigation: browse, goup
+basic navigation: goto, goup
 
 saving and loading: load, save
 

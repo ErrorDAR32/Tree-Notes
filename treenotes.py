@@ -2,7 +2,7 @@
 import commands
 import utils
 
-current = utils.Note()
+current = utils.Note(name="Root")
 
 commands.current = current
 

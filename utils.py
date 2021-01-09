@@ -14,6 +14,9 @@ class Note:
     def addchild(self, *args, **kwargs):
         self.subnotes.append(Note(*args, father=self, **kwargs))
 
+    def __repr__(self):
+        return f"note {self.name}"
+
 
 tag_text = "text".encode("UTF-8")
 tag_name = "name".encode("UTF-8")
@@ -22,7 +25,8 @@ tag_name = "name".encode("UTF-8")
 def getroot(note: Note):
     if note.father is None:
         return note
-    getroot(note.father)
+    else:
+        return getroot(note.father)
 
 
 def note_to_sss(note: Note):
@@ -44,3 +48,11 @@ def sss_to_note(sssobj: SSS.SSSObject, father=None):
     )
     note.subnotes = [sss_to_note(sub, note) for sub in sssobj.fields]
     return note
+
+
+def get_from_name(current, name):
+    for sub in current.subnotes:
+        if sub.name == name:
+            return sub
+    else:
+        return None

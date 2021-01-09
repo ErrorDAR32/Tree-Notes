@@ -9,7 +9,7 @@ current = utils.Note()
 lastfile = None
 
 
-def exit(*args,**kwargs):
+def exit(*args, **kwargs):
     """Exit the program. Warning: saving is not automatic!"""
     raise
 
@@ -91,6 +91,7 @@ def ls(*args, **kwargs):
 
 
 def save(*args, **kwargs):
+    global current
     """Saves the current notes structure into a <name> file.
      If no arguments are provided the last filename will be used.
      Preferably use ".trnts" as file extension!"""
@@ -98,6 +99,7 @@ def save(*args, **kwargs):
 
     serialized = utils.note_to_sss(utils.getroot(current))
     serialized = SSS.serialize(serialized)
+
     if args:
         lastfile = open(args[0], "wb+")
 
@@ -167,9 +169,10 @@ def prev(*args, **kwargs):
 def rls(*args, **kwargs):
     """dysplay recursively from the current note the names of each note."""
     def _rls(node, iden=0):
-        print(" "*iden, ":", node.name, sep="")
+        print(" "*iden, node.name, sep="")
         for sub in node.subnotes:
             _rls(sub, iden + 4)
+    _rls(current)
 
 
 funcs = [create, delete, see, goto, goup, ls, save, load, edit, exit, search, prev, rls]

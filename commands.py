@@ -1,6 +1,7 @@
 import utils
 import SSS
 import editor
+
 # this have to be defined in order for most commands to work
 current = utils.Note()
 
@@ -9,11 +10,12 @@ lastfile = None
 
 
 def exit(*args,**kwargs):
+    """Exit the program. Warning: saving is not automatic!"""
     raise
 
 
 def goup(*args, **kwargs):
-    """go to the note above in the tree, until you are on the root note"""
+    """Go to the note above in the tree, until you are on the root note"""
     global current
     if current.father is not None:
         current = current.father
@@ -22,7 +24,7 @@ def goup(*args, **kwargs):
 
 
 def goto(*args, **kwargs):
-    """go to <name> note."""
+    """Go to <name> note in the subnotes of the current note."""
     name = args[0]
     global current
     for sub in current.subnotes:
@@ -34,7 +36,8 @@ def goto(*args, **kwargs):
 
 
 def see(*args, **kwargs):
-    """see the contents of <name> note"""
+    """See the contents of <name> note.
+    If no arguments are provided the current note will be used."""
     if args:
         name = args[0]
         for sub in current.subnotes:
@@ -50,7 +53,7 @@ def see(*args, **kwargs):
 
 
 def create(*args, **kwargs):
-    """create a subnote of the current note named <name>"""
+    """Create a subnote on the current note named <name>"""
     if args:
         name = args[0]
     else:
@@ -68,7 +71,8 @@ def create(*args, **kwargs):
 
 
 def delete(*args, **kwargs):
-    """delete <name> note"""
+    """Delete <name> note.
+    Warning: This action cannot be undone!"""
     name = args[0]
     for sub in range(len(current.subnotes)):
         if current.subnotes[sub].name == name:
@@ -79,7 +83,7 @@ def delete(*args, **kwargs):
 
 
 def ls(*args, **kwargs):
-    """see the names of the subnotes of the current note"""
+    """See the names of the subnotes of the current note or the <name> note."""
     if len(current.subnotes) == 0:
         print("None!")
     for sub in current.subnotes:
@@ -87,6 +91,9 @@ def ls(*args, **kwargs):
 
 
 def save(*args, **kwargs):
+    """Saves the current notes structure into a <name> file.
+     If no arguments are provided the last filename will be used.
+     Preferably use ".trnts" as file extension!"""
     global lastfile
 
     serialized = utils.note_to_sss(utils.getroot(current))
@@ -103,6 +110,9 @@ def save(*args, **kwargs):
 
 
 def load(*args, **kwargs):
+    """Loads <name> notes file into the program
+    If no arguments are provided the last filename will be used.
+    """
     global lastfile
     global current
 
@@ -133,16 +143,33 @@ def edit(*args, **kwargs):
 
 
 def search(*args, note=None, route="", **kwargs):
+    """search"""
     if note is None:
         note = utils.getroot(current)
     route += "/" + note.name
     for arg in args:
         if note.text.find(arg) != (-1):
-            print(f"match found in text of {route}")
+            print(f"match of {arg} found in text of {route}")
         if note.name.find(arg) != (-1):
-            print(f"match found at {route}")
+            print(f"match of {arg} found at {route}")
     for sub in note.subnotes:
         search(*args, note=sub, route=route)
 
 
-funcs = [create, delete, see, goto, goup, ls, save, load, edit, exit, search]
+def prev(*args, **kwargs):
+    """Preview the contents of a file, displaying the first 30 characters of the note."""
+    note = utils.get_from_name(current, args)
+    if note is None:
+        note = current
+    print(note.text[:30])
+
+
+def rls(*args, **kwargs):
+    """dysplay recursively from the current note the names of each note."""
+    def _rls(node, iden=0):
+        print(" "*iden, ":", node.name, sep="")
+        for sub in node.subnotes:
+            _rls(sub, iden + 4)
+
+
+funcs = [create, delete, see, goto, goup, ls, save, load, edit, exit, search, prev, rls]

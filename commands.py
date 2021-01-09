@@ -175,4 +175,21 @@ def rls(*args, **kwargs):
     _rls(current)
 
 
-funcs = [create, delete, see, goto, goup, ls, save, load, edit, exit, search, prev, rls]
+def help(*args, **kwargs):
+    if args:
+        name = args[0]
+        for f in funcs:
+            if f.__name__ == name:
+                print(f.__doc__)
+                break
+        else:
+            print("Unknown command")
+    else:
+        print(" list of commands:", *[f.__name__ for f in funcs], sep=" ")
+        print("type help <command> for more info.")
+
+
+
+funcs = [create, delete, see, goto, goup, ls, save, load, edit, exit, search, prev, rls, help]
+
+

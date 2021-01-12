@@ -99,7 +99,7 @@ class TextWrapper:
 
 
 class TextRenderer:
-    text = TextWrapper("")
+    text: TextWrapper
     x_render_offst = 0
     y_render_offst = 0
     a = 0

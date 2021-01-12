@@ -13,6 +13,7 @@ class SSSObject:
 
 
 class FileWrapper:
+    """File wrapper used for loading SSS files into memory"""
     def __init__(self, File):
         self.data = File
         self.data.seek(0)
@@ -29,6 +30,7 @@ class FileWrapper:
 
 
 class IterWrapper:
+    """iterable wrapper used for parsing"""
     def __init__(self, iterable):
         self.length = len(iterable)
         self.iterable = iter(iterable)
@@ -45,6 +47,7 @@ class IterWrapper:
 
 
 def tokenize(file: FileWrapper):
+    """tokenizes a file"""
     tokens = []
     file.next()
     while True:
@@ -78,6 +81,7 @@ def tokenize(file: FileWrapper):
 
 
 def parseobj(tokens):
+    """parses an SSS object from a tokens array"""
     obj = SSSObject()
     while True:
         tokens.next()
@@ -100,6 +104,7 @@ def parseobj(tokens):
 
 
 def parsenamed(tokens):
+    """parses a named field"""
     tokens.next()
     if tokens.current() == field_tag:
         field1 = tokens.next()
@@ -117,10 +122,12 @@ def parsenamed(tokens):
 
 
 def parsefield(tokens):
+    """parses a field"""
     return tokens.next()
 
 
 def parse(file):
+    """you give it a file, it gives you a SSSObject"""
     file = FileWrapper(file)
     file.next()
     if file.current() == obj_opening:
@@ -163,6 +170,7 @@ def serializenamed(key, field):
 
 
 def serialize(obj: SSSObject):
+    """used convert SSSObjects into a byte arrays"""
     serialized = bytearray()
     serialized.append(obj_opening)
 

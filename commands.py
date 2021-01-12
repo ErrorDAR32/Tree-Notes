@@ -129,6 +129,7 @@ def load(*args, **kwargs):
 
 
 def edit(*args, **kwargs):
+    """enters an interactive text editor to edit the text of <name>"""
     if args:
         name = args[0]
         for sub in current.subnotes:
@@ -176,6 +177,7 @@ def rls(*args, **kwargs):
 
 
 def help(*args, **kwargs):
+    """displays a help text for each function, gives a list of commands if no arguments are given"""
     if args:
         name = args[0]
         for f in funcs:
@@ -186,10 +188,14 @@ def help(*args, **kwargs):
             print("Unknown command")
     else:
         print(" list of commands:", *[f.__name__ for f in funcs], sep=" ")
-        print("type help <command> for more info.")
+        print("type help <command> for more info.\n"
+              "or help help for more help.")
 
 
-
-funcs = [create, delete, see, goto, goup, ls, save, load, edit, exit, search, prev, rls, help]
-
-
+funcs = [
+    create, delete, see,
+    goto,   goup,   ls,
+    save,   load,   edit,
+    exit,   search, prev,
+    rls,    help
+]

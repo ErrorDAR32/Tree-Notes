@@ -107,6 +107,7 @@ def render(Wtext: TextEditorBackend, yfst=0, xfst=0, stdscr=None):
 
     lines, columns = stdscr.getmaxyx()
 
+    # line clipping math
     if Wtext.x >= Wtext.x_render_offst + columns - xfst - 1:
         Wtext.x_render_offst = Wtext.x - columns + xfst + 1
     elif Wtext.x < Wtext.x_render_offst:
@@ -129,7 +130,7 @@ def render(Wtext: TextEditorBackend, yfst=0, xfst=0, stdscr=None):
                 continue
             stdscr.addch(Wtext.text[line][char])
 
-    # position cursos to where user is editing
+    # position cursor to where user is editing
     stdscr.move(Wtext.y - Wtext.y_render_offst + yfst, Wtext.x - Wtext.x_render_offst + xfst)
     stdscr.refresh()
 
@@ -144,6 +145,7 @@ def editor(string: str, toptext="press crtl + x to exit"):
         # main_loop
         key = ""
         while True:
+            # render text
             render(text, 1, 1, stdscr)
             coords = stdscr.getyx()
             stdscr.move(0, 0)
@@ -152,6 +154,7 @@ def editor(string: str, toptext="press crtl + x to exit"):
 
             key = stdscr.getkey()
 
+            # key catch
             if key == "KEY_LEFT":
                 text.move_left()
 
@@ -169,6 +172,7 @@ def editor(string: str, toptext="press crtl + x to exit"):
 
             elif key == "KEY_DC":
                 text.delete_supr()
+
             # exit char
             elif key == "\x18":
                 stdscr.move(0, 0)
@@ -183,6 +187,7 @@ def editor(string: str, toptext="press crtl + x to exit"):
             elif len(key) == 1:
                 text.insert_char(key)
 
+    # start and end
     saved = curses.wrapper(main)
     if saved is False:
         return False

@@ -18,7 +18,7 @@ def main():
 
         execute(func, args)
 
-    print("Wellcome To Tree-Notes, Foor help, type \"help\"")
+    print("Wellcome To Tree-Notes, For help, type \"help\"")
     while True:
         cmd = input(">>>: ").split()
         if cmd:

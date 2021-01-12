@@ -180,6 +180,33 @@ def help(*args, **kwargs):
     """displays a help text for each function, gives a list of commands if no arguments are given"""
     if args:
         name = args[0]
+        if name == "help":
+            print(
+                "Wellcome To TreeNotes 2.0",
+                "This Program is designed to store and manage",
+                "named texts structured in a n-tree fashion. called \"notes\".",
+                "to interact with the notes, you use the commands provided.",
+                "commands can also take arguments to change their functionality.",
+
+                "The next lines will describe a normal use case example as",
+                "typed commands and their function, note that when the program",
+                "starts, it is already at the Root note"
+                
+                "\n>>>: create food.",
+                "This command will create a note called \"food\" as a subnote",
+                "(a child note of the current note)."
+                
+                "\n>>>: edit food",
+                "This command will edit the text of the note named \"food\" created previously",
+                "by entering a simple text editor.",
+
+                "\n>>>: goto food"
+                "This will navigate to \"food\", setting it as the current note.",
+
+                "\n>>>: create groceries_list",
+                "This will create a subnote of \"food\" called \"groceries_list\", ",
+                "note that this note is the grand child of the Root Note.",
+                sep="\n")
         for f in funcs:
             if f.__name__ == name:
                 print(f.__doc__)

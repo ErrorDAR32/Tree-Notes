@@ -193,19 +193,19 @@ def help(*args, **kwargs):
                 "to interact with the notes, you use the commands provided.",
                 "commands can also take arguments to change their functionality.",
 
-                "The next lines will describe a normal use case example as",
+                "\nThe next lines will describe a normal use case example as",
                 "typed commands and their function, note that when the program",
-                "starts, it is already at the Root note"
+                "starts, it is already at the Root note.",
                 
                 "\n>>>: add food.",
                 "This command will add a note called \"food\" as a subnote",
-                "(a child note of the current note)."
+                "(a child note of the current note).",
                 
                 "\n>>>: edit food",
                 "This command will edit the text of the note named \"food\" created previously",
                 "by entering a simple text editor.",
 
-                "\n>>>: goto food"
+                "\n>>>: goto food",
                 "This will navigate to \"food\", setting it as the current note.",
 
                 "\n>>>: add groceries_list",

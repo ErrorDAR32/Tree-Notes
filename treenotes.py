@@ -14,7 +14,7 @@ def main():
         cmd = argv[1:]
         func = cmd[0]
         args = cmd[1:]
-        print(f"Executing {cmd}...")
+        print(f"Executing ", *cmd, "...")
 
         execute(func, args)
 

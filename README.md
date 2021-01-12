@@ -8,7 +8,7 @@ To use it you just need to execute treenotes.py file from your nearest console!
 ### Current features
 
 
-basic instructions: help, create, delete, edit, see, ls
+basic instructions: help, add, rem, edit, see, ls
 
 basic navigation: goto, goup
 

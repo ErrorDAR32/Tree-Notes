@@ -14,6 +14,7 @@ def exit(*args, **kwargs):
     raise
 
 
+# TODO merge navigation commands into one
 def goup(*args, **kwargs):
     """Go to the note above in the tree, until you are on the root note"""
     global current
@@ -52,25 +53,29 @@ def see(*args, **kwargs):
     print(note.text)
 
 
-def create(*args, **kwargs):
-    """Create a subnote on the current note named <name>"""
+def add(*args, **kwargs):
+    """Adds a subnote on the current note named <name>"""
     if args:
+        name: str
         name = args[0]
+        if name.find(" ") != -1:
+            print("name can't have spaces!")
+            return
     else:
-        print("name required")
+        print("Name required.")
         return
     if name == '':
-        print("invalid name!")
+        print("Invalid name.")
         return
 
     for sub in current.subnotes:
         if sub.name == name:
-            print("name already used!")
+            print("name already used.")
             return
     current.addchild(name=name)
 
 
-def delete(*args, **kwargs):
+def rem(*args, **kwargs):
     """Delete <name> note.
     Warning: This action cannot be undone!"""
     name = args[0]
@@ -177,7 +182,7 @@ def rls(*args, **kwargs):
 
 
 def help(*args, **kwargs):
-    """displays a help text for each function, gives a list of commands if no arguments are given"""
+    """Displays a help text for each function, gives a list of commands if no arguments are given."""
     if args:
         name = args[0]
         if name == "help":
@@ -192,8 +197,8 @@ def help(*args, **kwargs):
                 "typed commands and their function, note that when the program",
                 "starts, it is already at the Root note"
                 
-                "\n>>>: create food.",
-                "This command will create a note called \"food\" as a subnote",
+                "\n>>>: add food.",
+                "This command will add a note called \"food\" as a subnote",
                 "(a child note of the current note)."
                 
                 "\n>>>: edit food",
@@ -203,8 +208,8 @@ def help(*args, **kwargs):
                 "\n>>>: goto food"
                 "This will navigate to \"food\", setting it as the current note.",
 
-                "\n>>>: create groceries_list",
-                "This will create a subnote of \"food\" called \"groceries_list\", ",
+                "\n>>>: add groceries_list",
+                "This will add a subnote of \"food\" called \"groceries_list\", ",
                 "note that this note is the grand child of the Root Note.",
                 sep="\n")
         for f in funcs:
@@ -212,17 +217,17 @@ def help(*args, **kwargs):
                 print(f.__doc__)
                 break
         else:
-            print("Unknown command")
+            print("Unknown command.")
     else:
-        print(" list of commands:", *[f.__name__ for f in funcs], sep=" ")
+        print("List of commands:", *[f.__name__ for f in funcs], sep=" ")
         print("type help <command> for more info.\n"
               "or help help for more help.")
 
 
 funcs = [
-    create, delete, see,
-    goto,   goup,   ls,
-    save,   load,   edit,
-    exit,   search, prev,
-    rls,    help
+    add,  rem,    see,
+    goto, goup,   ls,
+    save, load,   edit,
+    exit, search, prev,
+    rls,  help
 ]

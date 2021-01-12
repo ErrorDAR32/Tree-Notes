@@ -10,32 +10,31 @@ commands.current = current
 def main():
     from sys import argv
     if len(argv) > 1:
-        args = argv[1:]
-        cmd = args
+        cmd = argv[1:]
         func = cmd[0]
         args = cmd[1:]
-        for f in commands.funcs:
-            if f.__name__ == func:
-                f(*args)
-                break
-        else:
-            print("invalid command")
+        print(f"Executing {cmd}...")
 
-    print("mensaje de bienvenida :v")
+        execute(func, args)
+
+    print("Wellcome To Tree-Notes, Foor help, type \"help\"")
     while True:
         cmd = input(">>>: ").split()
         if cmd:
             func = cmd[0]
             args = cmd[1:]
+            execute(func, args)
         else:
             continue
 
-        for f in commands.funcs:
-            if f.__name__ == func:
-                f(*args)
-                break
-        else:
-            print("invalid command")
+
+def execute(func, args):
+    for f in commands.funcs:
+        if f.__name__ == func:
+            f(*args)
+            break
+    else:
+        print("invalid command")
 
 
 main()

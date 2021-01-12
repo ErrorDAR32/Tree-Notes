@@ -1,10 +1,12 @@
 import curses
 
 
-class TextWrapper:
+class TextEditorBackend:
     text = [[], ]
     y = 0
     x = 0
+    x_render_offst = 0
+    y_render_offst = 0
 
     def __init__(self, text: str):
         if text is None:
@@ -98,65 +100,51 @@ class TextWrapper:
         return res
 
 
-class TextRenderer:
-    text: TextWrapper
-    x_render_offst = 0
-    y_render_offst = 0
-    a = 0
+def render(Wtext: TextEditorBackend, yfst=0, xfst=0, stdscr=None):
+    stdscr.clear()
+    stdscr.refresh()
+    stdscr.move(xfst, yfst)
 
-    def __init__(self, stdscr: curses.window, text: TextWrapper):
-        self.text = text
-        self.stdscr = stdscr
+    lines, columns = stdscr.getmaxyx()
 
-    def render(self, yfst=0, xfst=0, key="", stdscr=None):
-        if stdscr is None:
-            stdscr = self.stdscr
-        stdscr.clear()
-        stdscr.refresh()
-        stdscr.move(xfst, yfst)
+    if Wtext.x >= Wtext.x_render_offst + columns - xfst - 1:
+        Wtext.x_render_offst = Wtext.x - columns + xfst + 1
+    elif Wtext.x < Wtext.x_render_offst:
+        Wtext.x_render_offst = Wtext.x
+    Wtext.a = Wtext.x_render_offst
 
-        lines, columns = stdscr.getmaxyx()
+    if Wtext.y >= Wtext.y_render_offst + lines - yfst - 1:
+        Wtext.y_render_offst = Wtext.y - lines + yfst + 1
+    elif Wtext.y < Wtext.y_render_offst:
+        Wtext.y_render_offst = Wtext.y
 
-        if self.text.x >= self.x_render_offst + columns - xfst - 1:
-            self.x_render_offst = self.text.x - columns + xfst + 1
-        elif self.text.x < self.x_render_offst:
-            self.x_render_offst = self.text.x
-        self.a = self.x_render_offst
+    # rendering the text:
+    for line in range(len(Wtext.text)):
+        if (line < Wtext.y_render_offst) or (line >= Wtext.y_render_offst + lines - yfst):
+            continue
+        stdscr.move(line - Wtext.y_render_offst + yfst, 0 + xfst)
 
-        if self.text.y >= self.y_render_offst + lines - yfst - 1:
-            self.y_render_offst = self.text.y - lines + yfst + 1
-        elif self.text.y < self.y_render_offst:
-            self.y_render_offst = self.text.y
-
-        # rendering the text:
-        for line in range(len(self.text.text)):
-            if (line < self.y_render_offst) or (line >= self.y_render_offst + lines - yfst):
+        for char in range(len(Wtext.text[line])):
+            if (char < Wtext.x_render_offst) or (char >= Wtext.x_render_offst + columns - xfst):
                 continue
-            stdscr.move(line - self.y_render_offst + yfst, 0 + xfst)
+            stdscr.addch(Wtext.text[line][char])
 
-            for char in range(len(self.text.text[line])):
-                if (char < self.x_render_offst) or (char >= self.x_render_offst + columns - xfst):
-                    continue
-                stdscr.addch(self.text.text[line][char])
-
-        # position cursos to where user is editing
-        stdscr.move(self.text.y - self.y_render_offst + yfst, self.text.x - self.x_render_offst + xfst)
-        stdscr.refresh()
+    # position cursos to where user is editing
+    stdscr.move(Wtext.y - Wtext.y_render_offst + yfst, Wtext.x - Wtext.x_render_offst + xfst)
+    stdscr.refresh()
 
 
 def editor(string: str, toptext="press crtl + x to exit"):
-
     def main(stdscr: curses.window):
         # initialization
         curses.curs_set(True)
         curses.noecho()
-        text = TextWrapper(string)
-        renderer = TextRenderer(stdscr, text)
+        text = TextEditorBackend(string)
 
         # main_loop
         key = ""
         while True:
-            renderer.render(1, 1, key)
+            render(text, 1, 1, stdscr)
             coords = stdscr.getyx()
             stdscr.move(0, 0)
             stdscr.addstr(toptext)
@@ -166,16 +154,22 @@ def editor(string: str, toptext="press crtl + x to exit"):
 
             if key == "KEY_LEFT":
                 text.move_left()
+
             elif key == "KEY_RIGHT":
                 text.move_right()
+
             elif key == "KEY_UP":
                 text.move_up()
+
             elif key == "KEY_DOWN":
                 text.move_down()
+
             elif key == "KEY_BACKSPACE":
                 text.delete_backspace()
+
             elif key == "KEY_DC":
                 text.delete_supr()
+            # exit char
             elif key == "\x18":
                 stdscr.move(0, 0)
                 stdscr.addstr(" do you want to save? y/n")

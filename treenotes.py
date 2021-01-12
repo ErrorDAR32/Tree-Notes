@@ -9,6 +9,7 @@ commands.current = current
 
 def main():
     from sys import argv
+    # TODO support for multiple commands
     if len(argv) > 1:
         cmd = argv[1:]
         func = cmd[0]

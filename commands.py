@@ -190,14 +190,14 @@ def help(*args, **kwargs):
                 "This will add a subnote of \"food\" called \"groceries_list\", ",
                 "note that this note is the grand child of the Root Note.",
                 sep="\n")
-        for f in funcs:
+        for f in functions:
             if f.__name__ == name:
                 print(f.__doc__)
                 break
         else:
             print("Unknown command.")
     else:
-        print("List of commands:", *[f.__name__ for f in funcs], sep=" ")
+        print("List of commands:", *[f.__name__ for f in functions], sep=" ")
         print("type help <command> for more info.\n"
               "or help help for more help.")
 
@@ -215,10 +215,10 @@ def cn(*args, **kwargs):
         current = res[-1]
 
 
-funcs = [
+functions = [
     add,  rem,    see,
-    goto, goup,   ls,
-    save, load,   edit,
-    exit, search, prev,
-    rls,  help, cn,
+    ls,   save, load,
+    edit, exit, search,
+    prev, rls,  help,
+    cn,
 ]

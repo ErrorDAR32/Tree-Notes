@@ -30,7 +30,7 @@ def main():
 
 
 def execute(func, args):
-    for f in commands.funcs:
+    for f in commands.functions:
         if f.__name__ == func:
             f(*args)
             break

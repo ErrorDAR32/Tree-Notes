@@ -14,28 +14,6 @@ def exit(*args, **kwargs):
     raise
 
 
-# TODO merge navigation commands into one
-def goup(*args, **kwargs):
-    """Go to the note above in the tree, until you are on the root note"""
-    global current
-    if current.father is not None:
-        current = current.father
-    else:
-        print("at the root already!")
-
-
-def goto(*args, **kwargs):
-    """Go to <name> note in the subnotes of the current note."""
-    name = args[0]
-    global current
-    for sub in current.subnotes:
-        if sub.name == name:
-            current = sub
-            break
-    else:
-        print("invalid name!")
-
-
 def see(*args, **kwargs):
     """See the contents of <name> note.
     If no arguments are provided the current note will be used."""

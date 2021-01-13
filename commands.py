@@ -216,7 +216,7 @@ def cn(*args, **kwargs):
 
 
 functions = [
-    add,  rem,    see,
+    add,  rem,  see,
     ls,   save, load,
     edit, exit, search,
     prev, rls,  help,

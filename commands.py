@@ -102,7 +102,7 @@ def save(*args, **kwargs):
      Preferably use ".trnts" as file extension!"""
     global lastfile
 
-    serialized = utils.note_to_sss(utils.getroot(current))
+    serialized = utils.note_to_sss(utils.getupper(current))
     serialized = SSS.serialize(serialized)
 
     if args:
@@ -153,7 +153,7 @@ def edit(*args, **kwargs):
 def search(*args, note=None, route="", **kwargs):
     """search"""
     if note is None:
-        note = utils.getroot(current)
+        note = utils.getupper(current)
     route += "/" + note.name
     for arg in args:
         if note.text.find(arg) != (-1):
@@ -224,10 +224,23 @@ def help(*args, **kwargs):
               "or help help for more help.")
 
 
+def cn(*args, **kwargs):
+    """Navigate trough the notes structure using a cd like syntax.
+    You can use / for absolute routes (from Root),
+    ./ for relative route from the current Note or
+    .. for referring to the upper directory."""
+    global current
+    full = "".join(args)
+
+    res = utils.get_route(current, full)
+    if res:
+        current = res[-1]
+
+
 funcs = [
     add,  rem,    see,
     goto, goup,   ls,
     save, load,   edit,
     exit, search, prev,
-    rls,  help
+    rls,  help, cn,
 ]

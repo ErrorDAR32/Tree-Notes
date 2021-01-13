@@ -21,7 +21,7 @@ Current Implemented Features are:
 
 - basic instructions: help, add, rem, edit, see
 
-- basic navigation: goto, goup, ls
+- basic navigation: cn, ls
 
 - saving and loading: load, save
 

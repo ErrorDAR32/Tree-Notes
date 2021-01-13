@@ -22,11 +22,13 @@ tag_text = "text".encode("UTF-8")
 tag_name = "name".encode("UTF-8")
 
 
-def getroot(note: Note):
+def getupper(note: Note, depth=-1):
+    if depth == 0:
+        return note
     if note.father is None:
         return note
     else:
-        return getroot(note.father)
+        return getupper(note.father,depth - 1)
 
 
 def note_to_sss(note: Note):
@@ -56,3 +58,56 @@ def get_from_name(current, name):
             return sub
     else:
         return None
+
+
+def escape_name_string(string: str):
+    string = string.replace('/', "")
+    string = string.replace(" ", "\\ ")
+    return string
+
+
+def descape_name_string(string: str):
+    string = string.replace("\\ ", " ")
+    return string
+
+
+def get_route(note: Note, address: str):
+    """gets an address and returns a list containing the route to it"""
+    if len(address) == 0:
+        print("Route required")
+        return []
+    if address[0] == "/":
+        note = getupper(note)
+        address = address[1:]
+
+    elif address[:2] == "./":
+        # note referenced is current note
+        address = address[2:]
+
+    elif address == "..":
+        if note.father is None:
+            print("Can't go further up.")
+            return []
+        return [getupper(note, 1), ]
+
+    elif address[:3] == "../":
+        if note.father is None:
+            print("Can't go further up.")
+            return []
+        note = getupper(note, 1)
+        address = address[3:]
+
+    names = address.split("/")
+    route = [note, ]
+    if names[0] == '':
+        return route
+
+    for name in names:
+        for subnote in (name for name in note.subnotes):
+            if subnote.name == name:
+                note = subnote
+                route.append(note)
+                break
+        else:
+            print(f"Invalid name {name}")
+    return route

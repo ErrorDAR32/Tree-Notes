@@ -168,10 +168,27 @@ def prev(*args, **kwargs):
 
 def rls(*args, **kwargs):
     """dysplay recursively from the current note the names of each note."""
-    def _rls(node, iden=0):
-        print(" "*iden, node.name, sep="")
-        for sub in node.subnotes:
-            _rls(sub, iden + 4)
+    def _rls(node, iden="", last=None, beforelast=True):
+        if last is None:
+            con = ""
+            last = True
+        else:
+            if last:
+                con = "└"
+            else:
+                con = "├"
+
+        if beforelast:
+            iden = iden + " "
+        else:
+            iden = iden + "│"
+
+        print(iden, con, node.name, sep="")
+
+        for sub in node.subnotes[:-1]:
+            _rls(sub, iden, False, last)
+        if node.subnotes:
+            _rls(node.subnotes[-1], iden, True, last)
     _rls(current)
 
 

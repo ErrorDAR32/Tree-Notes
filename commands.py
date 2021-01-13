@@ -3,10 +3,13 @@ import SSS
 import editor
 
 # this have to be defined in order for most commands to work
-current = utils.Note()
+current: utils.Note
 
 # this one is used by save and load to "use" the "last filename"
-lastfile = None
+lastfile: None
+
+# used by link and warp
+links: dict
 
 
 def exit(*args, **kwargs):

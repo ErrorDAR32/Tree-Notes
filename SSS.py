@@ -7,9 +7,13 @@ named_tag = 3
 
 
 class SSSObject:
-    def __init__(self):
-        self.fields = []
-        self.named_fields = {}
+    def __init__(self, fields=None, named_fields=None):
+        if fields is None:
+            fields = []
+        if named_fields is None:
+            named_fields = {}
+        self.fields = fields
+        self.named_fields = named_fields
 
 
 class FileWrapper:

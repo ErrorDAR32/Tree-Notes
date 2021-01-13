@@ -33,8 +33,8 @@ def getupper(note: Note, depth=-1):
 
 def note_to_sss(note: Note):
     SSSObj = SSS.SSSObject()
-    SSSObj.named_fields[tag_text] = note.text.encode("UTF-8")
-    SSSObj.named_fields[tag_name] = note.name.encode("UTF-8")
+    SSSObj.named_fields[tag_text] = note.text
+    SSSObj.named_fields[tag_name] = note.name
 
     for sub in note.subnotes:
         SSSObj.fields.append(note_to_sss(sub))
@@ -43,6 +43,7 @@ def note_to_sss(note: Note):
 
 def sss_to_note(sssobj: SSS.SSSObject, father=None):
     n = sssobj.named_fields
+
     note = Note(
         name=n[tag_name].decode("UTF-8"),
         text=n[tag_text].decode("UTF-8"),

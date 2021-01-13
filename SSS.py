@@ -39,11 +39,13 @@ class IterWrapper:
         self.length = len(iterable)
         self.iterable = iter(iterable)
         self.curr = None
+        self.count = 0
 
     def next(self):
         if self.length != 0:
             self.curr = self.iterable.__next__()
         self.length -= 1
+        self.count += 1
         return self.curr
 
     def current(self):
@@ -104,7 +106,7 @@ def parseobj(tokens):
 
         else:
             raise SyntaxError(
-                f"unexpected char {tokens.current()} at {tokens.pointer()}, expected {field_tag} or {obj_opening}")
+                f"unexpected char {tokens.current()} at {tokens.count}, expected {field_tag} or {obj_opening}")
 
 
 def parsenamed(tokens):
@@ -113,7 +115,7 @@ def parsenamed(tokens):
     if tokens.current() == field_tag:
         field1 = tokens.next()
     else:
-        raise SyntaxError(f"unexpected char {tokens.current()} at {tokens.pointer()}, expected {field_tag}")
+        raise SyntaxError(f"unexpected char {tokens.count} at {tokens.pointer()}, expected {field_tag}")
     tokens.next()
     if tokens.current() == field_tag:
         field2 = tokens.next()
@@ -121,7 +123,7 @@ def parsenamed(tokens):
         field2 = parseobj(tokens)
     else:
         raise SyntaxError(
-            f"unexpected char {tokens.current()} at {tokens.pointer()}, expected {field_tag} or {obj_opening}")
+            f"unexpected char {tokens.current()} at {tokens.count}, expected {field_tag} or {obj_opening}")
     return field1, field2
 
 
@@ -147,6 +149,9 @@ def parse(file):
 
 def serializefield(field):
     serialized = bytearray()
+    if isinstance(field, str):
+        field = field.encode("UTF-8")
+
     if isinstance(field, SSSObject):
         serialized.extend(serialize(field))
     elif isinstance(field, bytes):
@@ -161,15 +166,15 @@ def serializenamed(key, field):
     serialized.append(named_tag)
 
     serialized.append(field_tag)
+    if isinstance(key, str):
+        key = key.encode("UTF-8")
     serialized.extend(pack(">Q", len(key)))
     serialized.extend(key)
 
     if isinstance(field, SSSObject):
         serialized.extend(serialize(field))
-    elif isinstance(field, bytes):
-        serialized.append(field_tag)
-        serialized.extend(pack(">Q", len(field)))
-        serialized.extend(field)
+    elif isinstance(field, (bytes, str)):
+        serialized.extend(serializefield(field))
     return serialized
 
 

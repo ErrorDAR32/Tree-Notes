@@ -1,12 +1,9 @@
 import utils
 import commands
 import SSS
-
-current = commands.current
-lastfile = commands.lastfile
-links = commands.links
-
-commands.current = utils.Note()
+current = utils.Note()
+links = {}
+# lastfile = None
 
 
 def save(*args, **kwargs):
@@ -20,12 +17,12 @@ def save(*args, **kwargs):
     serialized = utils.note_to_sss(utils.getupper(current))
     serialized = SSS.SSSObject(
         named_fields={
-            "ver:": "2.0",
-            "linked_names": SSS.SSSObject(named_fields=links),
+            "ver": "2.0",
+            "links": SSS.SSSObject(named_fields=links),
             "Notes": serialized})
 
     serialized = SSS.serialize(serialized)
-
+    print(serialized)
     if args:
         lastfile = open(args[0], "wb+")
 
@@ -49,9 +46,13 @@ def load(*args, **kwargs):
         lastfile = open(args[0], "rb+")
     if lastfile is not None:
         notes = SSS.parse(lastfile)
-        links = notes.named_fields["links"]
         notes = utils.sss_to_note(notes)
 
         current = notes
     else:
         print("filename required")
+
+
+lastfile = open("test.trnts", "rb+")
+load()
+save()

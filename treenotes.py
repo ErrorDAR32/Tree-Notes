@@ -3,8 +3,9 @@ import commands
 import utils
 
 current = utils.Note(name="Root")
-
+links = {}
 commands.current = current
+commands.links = links
 
 
 def main():

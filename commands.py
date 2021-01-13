@@ -6,7 +6,7 @@ import editor
 current: utils.Note
 
 # this one is used by save and load to "use" the "last filename"
-lastfile: None
+lastfile = None
 
 # used by link and warp
 links: dict
@@ -82,10 +82,16 @@ def save(*args, **kwargs):
      If no arguments are provided the last filename will be used.
      Preferably use ".trnts" as file extension!"""
     global lastfile
+    global links
 
     serialized = utils.note_to_sss(utils.getupper(current))
-    serialized = SSS.serialize(serialized)
+    serialized = SSS.SSSObject(
+        named_fields={
+            "ver": "2.0",
+            "links": SSS.SSSObject(named_fields=links),
+            "Notes": serialized})
 
+    serialized = SSS.serialize(serialized)
     if args:
         lastfile = open(args[0], "wb+")
 
@@ -103,13 +109,20 @@ def load(*args, **kwargs):
     """
     global lastfile
     global current
+    global links
 
     if args:
         lastfile = open(args[0], "rb+")
     if lastfile is not None:
         notes = SSS.parse(lastfile)
-        notes = utils.sss_to_note(notes)
-        current = notes
+
+        l = notes.named_fields["links".encode("UTF-8")]
+        links = {}
+        for start, end in l.named_fields.items():
+            links[start.decode("UTF-8")] = end.decode("UTF-8")
+
+        notes = notes.named_fields["Notes".encode("UTF-8")]
+        current = utils.sss_to_note(notes)
     else:
         print("filename required")
 
